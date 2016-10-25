@@ -116,6 +116,7 @@ class State:
                 b.start[1] -= 1
 
     def __eq__(self, other):
+
         for i in range(SIZE):
             for j in range(SIZE):
                 if self.view[i][j] != other.view[i][j]:
@@ -178,6 +179,11 @@ class Problem(object):
         is such that the path doesn't matter, this function will only look at
         state2.  If the path does matter, it will consider c and maybe state1
         and action. The default method costs 1 for every step in the path."""
+        if state1 is not None:
+            if state2 is not None:
+                for i in range(len(state1.blocks)):
+                    c += math.fabs(state1.blocks[i].start[0]-state2.blocks[i].start[0])
+                    c += math.fabs(state1.blocks[i].start[1]-state2.blocks[i].start[1])
         return c + 1
 
     def value(self, state):
@@ -216,7 +222,7 @@ class Node:
 
     def expand(self, problem):
         "List the nodes reachable in one step from this node."
-        return [self.child_node(Problem(State(deepcopy(problem.initial.blocks))), action)
+        return [self.child_node(problem, action)
                 for action in problem.actions(self.state)]
 
     def child_node(self, problem, action):
@@ -291,11 +297,18 @@ def tree_search(problem, frontier):
     The argument frontier should be an empty queue.
     Don't worry about repeated paths to a state. [Figure 3.7]"""
     frontier.append(Node(problem.initial))
+    explored = 0
+    expanded = 0
     while frontier:
         node = frontier.pop()
+        explored += 1
         if problem.goal_test(node.state):
+            node.explored = explored
+            node.expanded = expanded
             return node
+        expanded -= frontier.__len__()
         frontier.extend(node.expand(problem))
+        expanded += frontier.__len__()
     return None
 
 
@@ -305,14 +318,19 @@ def graph_search(problem, frontier):
     If two paths reach a state, only use the first one. [Figure 3.7]"""
     frontier.append(Node(problem.initial))
     explored = set()
+    expanded = 0
     while frontier:
         node = frontier.pop()
         if problem.goal_test(node.state):
+            node.explored = len(explored)
+            node.expanded = expanded
             return node
         explored.add(node.state)
+        expanded -= frontier.__len__()
         frontier.extend(child for child in node.expand(problem)
                         if child.state not in explored and
                         child not in frontier)
+        expanded += frontier.__len__()
     return None
 
 
@@ -337,22 +355,21 @@ def breadth_first_search(problem):
     if problem.goal_test(node.state):
         return node
     frontier = FIFOQueue()
+    expanded_count = 1
     fstate = FIFOQueue()
     frontier.append(node)
-    fstate.append(node.state)
     explored = set()
     while frontier:
         node = frontier.pop()
-        node = Node(State(node.state.blocks),node.parent,node.action,node.path_cost)
-        fstate.pop()
         explored.add(node.state)
-        temp = node.expand(problem)
-        for child in temp:
-            if child.state not in explored and child.state not in fstate:
+        for child in node.expand(problem):
+            if child.state not in explored and child not in frontier:
                 if problem.goal_test(child.state):
+                    child.explored = len(explored)
+                    child.expanded = expanded_count
                     return child
-                fstate.append(child.state)
                 frontier.append(child)
+                expanded_count += 1
     return None
 
 
