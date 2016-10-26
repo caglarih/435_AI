@@ -1,24 +1,63 @@
 import ai as ai
 import resource
 
-b1 = ai.Block(0,2,ai.Orientation.horizontal,[2,1])
-b2 = ai.Block(1,2,ai.Orientation.horizontal,[5,2])
-b3 = ai.Block(2,3,ai.Orientation.vertical,[0,3])
-b4 = ai.Block(3,2,ai.Orientation.vertical,[1,4])
-b5 = ai.Block(4,2,ai.Orientation.vertical,[2,0])
-b6 = ai.Block(5,2,ai.Orientation.vertical,[4,0])
-b7 = ai.Block(6,2,ai.Orientation.vertical,[3,1])
+blcks = []
+with open("input.txt","r") as f:
+    inp = []
+    for row in f.read().split("\n")[:-1]:
+        inp.append([int(t) for t in row.split(" ")])
+    start = []
+    length = []
+    direc = []
+    no = []
+    len_acc = 0
+    for i in range(ai.SIZE):
+        if(inp[ai.GOAL[0]][i]==1):
+            inp[ai.GOAL[0]][i] = 0
+            if len_acc == 0:
+                start.append([ai.GOAL[0],i])
+            len_acc = len_acc + 1
+    length.append(len_acc)
+    direc.append(ai.Orientation.horizontal)
+    no.append(0)
+    for i in range(ai.SIZE):
+        for j in range(ai.SIZE):
+            if inp[i][j] != 0:
+                len_acc = 1
+                start.append([i,j])
+                t = inp[i][j]
+                no.append(t-1)
+                inp[i][j] = 0
+                cont = True
+                if not i == ai.SIZE-1:
+                    if inp[i+1][j] == t:
+                        cont = False
+                        len_acc += 1
+                        inp[i+1][j] = 0
+                        direc.append(ai.Orientation.vertical)
+                        if not i == ai.SIZE-2 and inp[i+2][j] == t:
+                            len_acc += 1
+                            inp[i+2][j] = 0
+                if not j == ai.SIZE-1:
+                    if inp[i][j+1] == t and cont:
+                        len_acc += 1
+                        inp[i][j+1] = 0
+                        direc.append(ai.Orientation.horizontal)
+                        if not j == ai.SIZE-2 and inp[i][j+2] == t:
+                            len_acc += 1
+                            inp[i][j+2] = 0
+                length.append(len_acc)
 
+    for i in range(len(no)):
+        blcks.append(ai.Block(no[i],length[i],direc[i],start[i]))
 
-s1 = ai.State([b1,b2,b3,b4,b5,b6,b7])
-#s1 = ai.State([b1,b2,b3,b4])
+s1 = ai.State(sorted(blcks))
 p = ai.Problem(s1)
 
-# print(p.actions(p.initial))
+t = ai.depth_first_tree_search(p)
+bc = len(t.state.blocks)
 
-t = ai.depth_first_graph_search(p)
-
-print("Number of explored nodes: " + str(t.explored))
+print("\nNumber of explored nodes: " + str(t.explored))
 print("Number of expanded nodes: " + str(t.expanded))
 mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024
 print("Total memory usage      : %.2f MB" % mem)
@@ -26,7 +65,6 @@ print("Total memory usage      : %.2f MB" % mem)
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import animation
-import time
 
 states = []
 while(not t==None):
@@ -64,26 +102,25 @@ with open("views.txt","w") as f:
         s.add(id)
         f.write(id+"\n\n")
 
+print("\nNumber of different states in output: " +  str(len(s)) + "\n")
+
 fig,ax = plt.subplots()
 ax1 = plt.gca()
-ax1.set_xlim((0, 6))
-ax1.set_ylim((6, 0))
+ax1.set_xlim((0, ai.SIZE))
+ax1.set_ylim((ai.SIZE, 0))
 
 def init():
-    for i in range(7):
+    for i in range(bc):
         ax1.add_patch(patches.Rectangle(data[i][0],data[i][2],data[i][1],facecolor=data[i][3]))
         return ax.plot()
 def animate(i):
     plt.cla()
-    ax1.set_xlim((0, 6))
-    ax1.set_ylim((6, 0))
-    for j in range(7):
-        ax1.add_patch(patches.Rectangle(data[7*i+j][0],data[7*i+j][2],data[7*i+j][1],facecolor=data[7*i+j][3]))
+    ax1.set_xlim((0, ai.SIZE))
+    ax1.set_ylim((ai.SIZE, 0))
+    for j in range(bc):
+        par = patches.Rectangle(data[bc*i+j][0],data[bc*i+j][2],data[bc*i+j][1],facecolor=data[bc*i+j][3])
+        ax1.add_patch(par)
     return ax.plot()
 
-anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(s), interval=500)
+anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(s), interval=700)
 plt.show()
-
-print("\nNumber of different states in output: " +  str(len(s)) + "\n\n")
-
-#print(z.solution())

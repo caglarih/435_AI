@@ -38,7 +38,10 @@ class Block:
         self.no = no
 
     def __repr__(self):
-        return "<Block [%s,%s] , %s>" % (self.start[0],self.start[1],self.length)
+        return "<Block [%s,%s] , %s, %s>" % (self.start[0],self.start[1],self.length,self.orientation.value)
+
+    def __gt__ (self,other):
+        return other.no < self.no
 
 class State:
     def __init__(self, blocks):
@@ -71,21 +74,27 @@ class State:
                 self.view[i][j] = 0
         for b in self.blocks:
             for i in range(b.length):
-                self.view[b.start[0]+i*b.orientation.value][b.start[1]+i*(1 - b.orientation.value)] = b.no+1
+                x_val = b.start[0]+i*b.orientation.value
+                y_val = b.start[1]+i*(1 - b.orientation.value)
+                self.view[x_val][y_val] = b.no+1
 
     def can_move(self, no):
         ret = []
         b = self.blocks[no]
-        if b.orientation == Orientation.horizontal:
-            if (b.start[1] != 0) and (self.view[b.start[0]][b.start[1]-1] == 0):
-                ret.append((no, 3))
-            if ((b.start[1]+b.length) < SIZE) and (self.view[b.start[0]][b.start[1]+b.length] == 0):
-                ret.append((no, 1))
+
         if b.orientation == Orientation.vertical:
             if (b.start[0] != 0) and (self.view[b.start[0]-1][b.start[1]] == 0):
                 ret.append((no, 0))
+        if b.orientation == Orientation.horizontal:
+            if ((b.start[1]+b.length) < SIZE) and (self.view[b.start[0]][b.start[1]+b.length] == 0):
+                ret.append((no, 1))
+        if b.orientation == Orientation.vertical:
             if ((b.start[0]+b.length) < SIZE) and (self.view[b.start[0]+b.length][b.start[1]] == 0):
                 ret.append((no, 2))
+        if b.orientation == Orientation.horizontal:
+            if (b.start[1] != 0) and (self.view[b.start[0]][b.start[1]-1] == 0):
+                ret.append((no, 3))
+
         return ret
 
     def move(self, no, direc):
@@ -152,7 +161,6 @@ class Problem(object):
         many actions, consider yielding them one at a time in an
         iterator, rather than building them all at once."""
         ac = []
-        #state.create_view()
         for b in range(len(state.blocks)):
             ac.extend(state.can_move(b))
         return ac
@@ -161,10 +169,8 @@ class Problem(object):
         """Return the state that results from executing the given
         action in the given state. The action must be one of
         self.actions(state)."""
-        tmp = State(state.blocks)
-        tmp.move(action[0],action[1])
-        #state.create_view()
-        return tmp
+        state.move(action[0],action[1])
+        return state
 
     def goal_test(self, state):
         """Return True if the state is a goal. The default method compares the
