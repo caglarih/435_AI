@@ -53,8 +53,17 @@ with open("input.txt","r") as f:
 
 s1 = ai.State(sorted(blcks))
 p = ai.Problem(s1)
+def f(node):
+    state = node.state
+    interest_last_cell = state.blocks[0].start[0]+state.blocks[0].length
+    ret = 0
+    for i in range(interest_last_cell,ai.SIZE):
+        ret += 1
+        if state.view[ai.GOAL[0]][i] != 0:
+            ret += 1
+    return 0
 
-t = ai.depth_first_tree_search(p)
+t = ai.astar_search(p,f)
 bc = len(t.state.blocks)
 
 print("\nNumber of explored nodes: " + str(t.explored))

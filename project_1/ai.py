@@ -16,6 +16,7 @@ import math
 import random
 import sys
 import bisect
+import random
 from enum import Enum
 from copy import deepcopy
 
@@ -57,6 +58,10 @@ class State:
         id = "\n".join(["".join(a) for a in id])
         return id
 
+    def __lt__(self,other):
+        return True
+
+
     def is_goal(self):
         goal = self.blocks[0]
         """
@@ -78,10 +83,9 @@ class State:
                 y_val = b.start[1]+i*(1 - b.orientation.value)
                 self.view[x_val][y_val] = b.no+1
 
-    def can_move(self, no):
+    def can_move(self, no, last):
         ret = []
         b = self.blocks[no]
-
         if b.orientation == Orientation.vertical:
             if (b.start[0] != 0) and (self.view[b.start[0]-1][b.start[1]] == 0):
                 ret.append((no, 0))
@@ -94,7 +98,10 @@ class State:
         if b.orientation == Orientation.horizontal:
             if (b.start[1] != 0) and (self.view[b.start[0]][b.start[1]-1] == 0):
                 ret.append((no, 3))
-
+        if last!=None:
+            if (last[0],(last[1]+2)%4) in ret:
+                ret.remove((last[0],(last[1]+2)%4))
+        #print(ret)
         return ret
 
     def move(self, no, direc):
@@ -155,14 +162,14 @@ class Problem(object):
         self.initial = initial
         self.goal = goal
 
-    def actions(self, state):
+    def actions(self, state, last):
         """Return the actions that can be executed in the given
         state. The result would typically be a list, but if there are
         many actions, consider yielding them one at a time in an
         iterator, rather than building them all at once."""
         ac = []
         for b in range(len(state.blocks)):
-            ac.extend(state.can_move(b))
+            ac.extend(state.can_move(b,last))
         return ac
 
     def result(self, state, action):
@@ -229,7 +236,7 @@ class Node:
     def expand(self, problem):
         "List the nodes reachable in one step from this node."
         return [self.child_node(problem, action)
-                for action in problem.actions(self.state)]
+                for action in problem.actions(self.state,self.action)]
 
     def child_node(self, problem, action):
         "[Figure 3.10]"
@@ -305,6 +312,7 @@ def tree_search(problem, frontier):
     frontier.append(Node(problem.initial))
     explored = 0
     expanded = 0
+    last = -1
     while frontier:
         node = frontier.pop()
         explored += 1
@@ -315,6 +323,7 @@ def tree_search(problem, frontier):
         expanded -= frontier.__len__()
         frontier.extend(node.expand(problem))
         expanded += frontier.__len__()
+
     return None
 
 
@@ -362,7 +371,6 @@ def breadth_first_search(problem):
         return node
     frontier = FIFOQueue()
     expanded_count = 1
-    fstate = FIFOQueue()
     frontier.append(node)
     explored = set()
     while frontier:
@@ -394,9 +402,13 @@ def best_first_graph_search(problem, f):
     frontier = PriorityQueue(min, f)
     frontier.append(node)
     explored = set()
+    expanded = 1
     while frontier:
         node = frontier.pop()
+        expanded -= frontier.__len__()
         if problem.goal_test(node.state):
+            node.explored = len(explored)
+            node.expanded = expanded
             return node
         explored.add(node.state)
         for child in node.expand(problem):
@@ -407,6 +419,7 @@ def best_first_graph_search(problem, f):
                 if f(child) < f(incumbent):
                     del frontier[incumbent]
                     frontier.append(child)
+        expanded += frontier.__len__()
     return None
 
 
