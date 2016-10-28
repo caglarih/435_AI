@@ -1,22 +1,29 @@
 import ai as ai
 import resource
 
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib import animation
+
 blcks = []
 with open("input.txt","r") as f:
     inp = []
+    row_count = 0
     for row in f.read().split("\n")[:-1]:
+        row_count += 1
         inp.append([int(t) for t in row.split(" ")])
+    ai.SIZE = row_count
     start = []
     length = []
     direc = []
     no = []
     len_acc = 0
     for i in range(ai.SIZE):
-        if(inp[ai.GOAL[0]][i]==1):
+        if inp[ai.GOAL[0]][i]==1 :
             inp[ai.GOAL[0]][i] = 0
             if len_acc == 0:
-                start.append([ai.GOAL[0],i])
-            len_acc = len_acc + 1
+                start.append([ai.GOAL[0], i])
+            len_acc += 1
     length.append(len_acc)
     direc.append(ai.Orientation.horizontal)
     no.append(0)
@@ -24,7 +31,7 @@ with open("input.txt","r") as f:
         for j in range(ai.SIZE):
             if inp[i][j] != 0:
                 len_acc = 1
-                start.append([i,j])
+                start.append([i, j])
                 t = inp[i][j]
                 no.append(t-1)
                 inp[i][j] = 0
@@ -49,34 +56,48 @@ with open("input.txt","r") as f:
                 length.append(len_acc)
 
     for i in range(len(no)):
-        blcks.append(ai.Block(no[i],length[i],direc[i],start[i]))
+        blcks.append(ai.Block(no[i], length[i], direc[i], start[i]))
 
 s1 = ai.State(sorted(blcks))
 p = ai.Problem(s1)
-def f(node):
+
+
+def f1(node):
     state = node.state
-    interest_last_cell = state.blocks[0].start[0]+state.blocks[0].length
+    interest_last_cell = state.blocks[0].start[1]+state.blocks[0].length
     ret = 0
-    for i in range(interest_last_cell,ai.SIZE):
+    for i in range(interest_last_cell, ai.SIZE):
+        ret += 1
+    return ret
+
+def f2(node):
+    state = node.state
+    interest_last_cell = state.blocks[0].start[1]+state.blocks[0].length
+    ret = 0
+    for i in range(interest_last_cell, ai.SIZE):
         ret += 1
         if state.view[ai.GOAL[0]][i] != 0:
             ret += 1
-    return 0
+    return ret
 
-t = ai.astar_search(p,f)
-bc = len(t.state.blocks)
-
+mem_start_1 = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024
+t = ai.astar_search(p, f1)
+print("By using first heuristic function in A* algorithm:")
 print("\nNumber of explored nodes: " + str(t.explored))
 print("Number of expanded nodes: " + str(t.expanded))
-mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024
-print("Total memory usage      : %.2f MB" % mem)
-
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib import animation
+mem_finish_1 = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024
+print("Total memory usage      : %.2f MB" % (mem_finish_1-mem_start_1))
+mem_start_2 = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024
+t = ai.astar_search(p, f2)
+mem_finish_2 = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024
+bc = len(t.state.blocks)
+print("By using second heuristic function in A* algorithm:")
+print("\nNumber of explored nodes: " + str(t.explored))
+print("Number of expanded nodes: " + str(t.expanded))
+print("Total memory usage      : %.2f MB" % (mem_finish_2-mem_start_2))
 
 states = []
-while(not t==None):
+while not t == None:
     states.append(t)
     t = t.parent
 data = []
@@ -85,17 +106,17 @@ with open("output.txt","w") as f:
         for b in a.state.blocks:
             ss = str(b.start[0]+1) + " " + str(b.start[1]+1) + " " + str(b.length) + " "
             if b.orientation == ai.Orientation.horizontal:
-                ss = ss + "h\n"
+                ss += "h\n"
                 fc = "blue"
                 if b.no == 0:
                     fc = "red"
-                data.append([(b.start[1],b.start[0]),1,b.length,fc])
+                data.append([(b.start[1], b.start[0]), 1, b.length, fc])
             else:
-                ss = ss + "v\n"
+                ss += "v\n"
                 fc = "blue"
                 if b.no == 0:
                     fc = "red"
-                data.append([(b.start[1],b.start[0]),b.length,1,fc])
+                data.append([(b.start[1], b.start[0]), b.length, 1, fc])
 
             f.write(ss)
             f.write("\n")
@@ -118,16 +139,19 @@ ax1 = plt.gca()
 ax1.set_xlim((0, ai.SIZE))
 ax1.set_ylim((ai.SIZE, 0))
 
+
 def init():
     for i in range(bc):
-        ax1.add_patch(patches.Rectangle(data[i][0],data[i][2],data[i][1],facecolor=data[i][3]))
+        ax1.add_patch(patches.Rectangle(data[i][0], data[i][2], data[i][1], facecolor=data[i][3]))
         return ax.plot()
+
+
 def animate(i):
     plt.cla()
     ax1.set_xlim((0, ai.SIZE))
     ax1.set_ylim((ai.SIZE, 0))
     for j in range(bc):
-        par = patches.Rectangle(data[bc*i+j][0],data[bc*i+j][2],data[bc*i+j][1],facecolor=data[bc*i+j][3])
+        par = patches.Rectangle(data[bc*i+j][0], data[bc*i+j][2], data[bc*i+j][1], facecolor=data[bc*i+j][3])
         ax1.add_patch(par)
     return ax.plot()
 
