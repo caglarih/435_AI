@@ -1,3 +1,7 @@
-**/__pycache__
-project1/ai_backup.py
+**/__pycache__/
+**/.idea/
 
+project1/outputview.txt
+project1/output.txt
+project1/input.txt
+project1/ai_backup.py
