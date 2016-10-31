@@ -32,6 +32,9 @@ class Orientation(Enum):
 # ______________________________________________________________________________
 
 class Block:
+    """
+    each block has lenth, orientation, start point matrix and block number(starts from 0)
+    """
     def __init__(self, no, length, orientation, start):
         self.length = length
         self.orientation = orientation
@@ -45,6 +48,10 @@ class Block:
         return other.no < self.no
 
 class State:
+    """
+    state has an blocks array holds included blocks
+    and view array for visualization
+    """
     def __init__(self, blocks):
         self.blocks = blocks
         self.view = [[0 for col in range(SIZE)] for row in range(SIZE)]
@@ -61,18 +68,17 @@ class State:
     def __lt__(self,other):
         return True
 
-
+    """
+    controlling goal situations
+    """
     def is_goal(self):
         goal = self.blocks[0]
-        """
-        for i in range(goal.start[1]+goal.length,SIZE):
-            if not self.view[GOAL[0]][i] == 0:
-                return False
-        """
         if goal.start[0] == GOAL[0] and (goal.start[1]+goal.length-1)==GOAL[1]:
             return True
 
-
+    """
+    fillng view matrix from included blocks
+    """
     def create_view(self):
         for i in range(SIZE):
             for j in range(SIZE):
@@ -83,50 +89,68 @@ class State:
                 y_val = b.start[1]+i*(1 - b.orientation.value)
                 self.view[x_val][y_val] = b.no+1
 
+    """
+    returns a tuple array about given block can move in which direction
+    """
     def can_move(self, no, last):
         ret = []
         b = self.blocks[no]
         if b.orientation == Orientation.vertical:
-            if (b.start[0] != 0) and (self.view[b.start[0]-1][b.start[1]] == 0):
-                ret.append((no, 0))
+            for i in range(b.start[0]):
+                if (self.view[b.start[0]-i-1][b.start[1]] == 0):
+                    ret.append((no, 0, i+1))
+                else:
+                    break
         if b.orientation == Orientation.horizontal:
-            if ((b.start[1]+b.length) < SIZE) and (self.view[b.start[0]][b.start[1]+b.length] == 0):
-                ret.append((no, 1))
+            for i in range(SIZE-b.start[1]-b.length):
+                if (self.view[b.start[0]][b.start[1]+b.length+i]) == 0:
+                    ret.append((no, 1, i+1))
+                else:
+                    break
         if b.orientation == Orientation.vertical:
-            if ((b.start[0]+b.length) < SIZE) and (self.view[b.start[0]+b.length][b.start[1]] == 0):
-                ret.append((no, 2))
+            for i in range(SIZE-b.start[0]-b.length):
+                if (self.view[b.start[0]+b.length+i][b.start[1]] == 0):
+                    ret.append((no, 2, i+1))
+                else:
+                    break
         if b.orientation == Orientation.horizontal:
-            if (b.start[1] != 0) and (self.view[b.start[0]][b.start[1]-1] == 0):
-                ret.append((no, 3))
-        if last!=None:
-            if (last[0],(last[1]+2)%4) in ret:
-                ret.remove((last[0],(last[1]+2)%4))
-        #print(ret)
-        return ret
+            for i in range(b.start[1]):
+                if (self.view[b.start[0]][b.start[1]-i-1] == 0):
+                    ret.append((no, 3, i+1))
+                else:
+                    break
+        if last is not None:
+            for i in range(SIZE-2):
+                if (last[0],(last[1]+2)%4,i+1) in ret:
+                    ret.remove((last[0],(last[1]+2)%4,i+1))
+        return reversed(ret)
 
+    """
+    moves given block in given direction
+    """
     def move(self, no, direc):
         b = self.blocks[no]
+        """up"""
         if direc == 0:
             if self.view[b.start[0]-1][b.start[1]]==0:
-                #print("oynatildi 0")
                 self.view[b.start[0]-1][b.start[1]] = no+1
                 self.view[b.start[0]-1+b.length][b.start[1]] = 0
                 b.start[0] -= 1
         elif direc == 1:
+            """right"""
             if self.view[b.start[0]][b.start[1]+b.length]==0:
-                #print("oynatildi 1")
                 self.view[b.start[0]][b.start[1]] = 0
                 self.view[b.start[0]][b.start[1]+b.length] = no+1
                 b.start[1] += 1
         elif direc == 2:
+            """down"""
             if self.view[b.start[0]+b.length][b.start[1]] == 0:
-                #print("oynatildi 2")
                 self.view[b.start[0]][b.start[1]] = 0
                 self.view[b.start[0]+b.length][b.start[1]] = no+1
                 b.start[0] += 1
         elif direc == 3:
+            """left"""
             if self.view[b.start[0]][b.start[1]-1]==0:
-                #print("oynatildi 3")
                 self.view[b.start[0]][b.start[1]-1] = no+1
                 self.view[b.start[0]][b.start[1]-1+b.length] = 0
                 b.start[1] -= 1
@@ -176,7 +200,8 @@ class Problem(object):
         """Return the state that results from executing the given
         action in the given state. The action must be one of
         self.actions(state)."""
-        state.move(action[0],action[1])
+        for i in range(action[2]):
+            state.move(action[0],action[1])
         return state
 
     def goal_test(self, state):
