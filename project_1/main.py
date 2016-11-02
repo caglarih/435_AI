@@ -113,9 +113,9 @@ mem_start = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024
 #t = ai.depth_first_tree_search(p)
 #t = ai.breadth_first_search(p)
 #t = ai.depth_first_graph_search(p)
-t = ai.astar_search(p, lambda node: 0)
+#t = ai.astar_search(p, lambda node: 0)
 #t = ai.astar_search(p, f1)
-#t = ai.astar_search(p, f2)
+t = ai.astar_search(p, f2)
 mem_finish = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024
 bc = len(t.state.blocks)
 print("\nBy using given algorithm:")

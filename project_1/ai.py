@@ -119,10 +119,12 @@ class State:
                     ret.append((no, 3, i+1))
                 else:
                     break
+        """
         if last is not None:
             for i in range(SIZE-2):
                 if (last[0],(last[1]+2)%4,i+1) in ret:
                     ret.remove((last[0],(last[1]+2)%4,i+1))
+        """
         return reversed(ret)
 
     """
