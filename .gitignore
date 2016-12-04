@@ -1,5 +1,6 @@
 **/__pycache__/
 **/.idea/
+**/*.pyc
 
 project_1/outputview.txt
 project_1/output.txt

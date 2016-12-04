@@ -1,47 +1,49 @@
-from simpleai.search import CspProblem
-from simpleai.search import backtrack
-from simpleai.search import MOST_CONSTRAINED_VARIABLE
-from simpleai.search import LEAST_CONSTRAINING_VALUE
+from constraint import *
+
 
 def get_variables():
-    var = set()
+    var = list()
     for i in range(1, 10):
         for j in range(1, 10):
-            var.add(str(10 * i + j))
+            var.append(str(10 * i + j))
     return var
 
 
-def get_domains(vars):
-    dom = {}
-    for v in vars:
-        dom[v] = list(range(1, 10))
-    return dom
-
-
-def const_different(variables, values):
+def const_different(*values):
     return len(values) == len(set(values))
 
 
 def sum_wrapper(value):
-    def f(variables, values):
+    def f(*values):
         return sum(values) == value
     return f
 
 
-def get_row(i):
-    return set([str(10 * i + j) for j in range(1, 10)])
+def get_row(r):
+    rows = []
+    for i in range(1, 9):
+        for j in range(i + 1, 10):
+            rows.append([str(10 * r + i), str(10 * r + j)])
+    return rows
 
 
-def get_col(j):
-    return set([str(10 * i + j) for i in range(1, 10)])
+def get_col(c):
+    cols = []
+    for i in range(1, 9):
+        for j in range(i + 1, 10):
+            cols.append([str(10 * i + c), str(10 * j + c)])
+    return cols
 
 
 def get_square(s):
-    res = set()
-    centers = [22, 25, 28, 52, 55, 58, 82, 82, 88]
-    for i in range(-1, 2):
-        for j in range(-1, 2):
-            res.add(str(centers[s - 1] + 10 * i + j))
+    res = list()
+    centers = [11, 14, 17, 41, 44, 47, 71, 74, 77]
+    c = centers[s - 1]
+    cells = [c, 1 + c, 2 + c, 10 + c, 11 + c, 12 + c,
+                20 + c, 21 + c, 22 + c]
+    for i in range(0, 8):
+        for j in range(i + 1, 9):
+            res.append([str(cells[i]), str(cells[j])])
     return res
 
 
@@ -55,23 +57,40 @@ def read_cons():
     return res
 
 
-if __name__ == "__main__":
-    constraints = []
-    vs = get_variables()
-    ds = get_domains(vs)
-
+def print_board(m):
+    print "\n\n-------------------------------------"
+    s = ""
     for i in range(1, 10):
-        constraints.append((get_row(i), const_different))
-        constraints.append((get_col(i), const_different))
-        constraints.append((get_square(i), const_different))
+        s = "|" + ' '
+        for j in range(1, 10):
+            index = str(10 * i + j)
+            s = s + str(m[index]) + " | "
+        print s
+        if not i == 9:
+            print "|---|---|---|---|---|---|---|---|---|"
+    print "-------------------------------------\n\n"
+
+
+if __name__ == "__main__":
+    p = Problem()
+    vs = get_variables()
+    for d in ["35", "53", "55", "57", "75"]:
+        vs.remove(d)
+    p.addVariables(vs, list(range(1, 10)))
+    p.addVariable("35", [7])
+    p.addVariable("53", [6])
+    p.addVariable("55", [3])
+    p.addVariable("57", [9])
+    p.addVariable("75", [2])
+    for i in range(1, 10):
+        for r in get_row(i):
+            p.addConstraint(FunctionConstraint(const_different), r)
+        for c in get_col(i):
+            p.addConstraint(FunctionConstraint(const_different), c)
+        for s in get_square(i):
+            p.addConstraint(FunctionConstraint(const_different), s)
 
     cs = read_cons()
-
     for c in cs:
-        constraints.append((c[1:], sum_wrapper(int(c[0]))))
-
-    problem = CspProblem(vs, ds, constraints)
-    result = backtrack(problem,
-        variable_heuristic=MOST_CONSTRAINED_VARIABLE,
-        value_heuristic=LEAST_CONSTRAINING_VALUE)
-    print(result)
+        p.addConstraint(FunctionConstraint(sum_wrapper(int(c[0]))), c[1:])
+    print_board(p.getSolution())
