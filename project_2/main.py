@@ -1,9 +1,11 @@
+#!/usr/bin/python
+
 from constraint import *
 
 
 def get_variables():
     """
-    return: an array that contains a string for each box in the puzzle
+    return an array that contains a string for each box in the puzzle
     """
     var = list()
     for i in range(1, 10):
@@ -70,8 +72,9 @@ def get_square(s):
             """
             eliminate couples in the same column or row
             """
-            if not (cells[j] - cells[i]) % 10 == 0:
-                if not (cells[j] - cells[i]) < 5:
+            t = cells[j] - cells[i]
+            if not t % 10 == 0:
+                if not t < 5:
                     res.append([str(cells[i]), str(cells[j])])
     return res
 
@@ -79,7 +82,7 @@ def get_square(s):
 def read_cons():
     """
     read the cons.txt file and return its contents as an array-array
-    examle line from txt file:
+    ex. line from txt file:
         19 11 21 22 31
     explanation:
         sum of values in 11,21,22 and 31 should be equal to 19.
@@ -111,7 +114,7 @@ def print_board(m):
 
 
 if __name__ == "__main__":
-    p = Problem()
+    p = Problem(BacktrackingSolver(forwardcheck=True))
 
     """all variables"""
     vs = get_variables()
@@ -133,11 +136,11 @@ if __name__ == "__main__":
     """for each row, column and sub-square add binary constraints"""
     for i in range(1, 10):
         for r in get_row(i):
-            p.addConstraint(FunctionConstraint(const_different), r)
+            p.addConstraint(FunctionConstraint(lambda x, y: x != y), r)
         for c in get_col(i):
-            p.addConstraint(FunctionConstraint(const_different), c)
+            p.addConstraint(FunctionConstraint(lambda x, y: x != y), c)
         for s in get_square(i):
-            p.addConstraint(FunctionConstraint(const_different), s)
+            p.addConstraint(FunctionConstraint(lambda x, y: x != y), s)
 
     """read sum constraints from the file"""
     cs = read_cons()
@@ -146,5 +149,7 @@ if __name__ == "__main__":
         [0]: sum value
         [1:]: variables to sum
         """
-        p.addConstraint(FunctionConstraint(sum_wrapper(int(c[0]))), c[1:])
+        _sum = int(c[0])
+        _vars = c[1:]
+        p.addConstraint(FunctionConstraint(sum_wrapper(_sum)), _vars)
     print_board(p.getSolution())

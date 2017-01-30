@@ -1,18 +1,18 @@
 #!/usr/bin/python
 #
 # Copyright (c) 2005-2014 - Gustavo Niemeyer <gustavo@niemeyer.net>
-# 
+#
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met: 
-# 
+# modification, are permitted provided that the following conditions are met:
+#
 # 1. Redistributions of source code must retain the above copyright notice, this
-#    list of conditions and the following disclaimer. 
+#    list of conditions and the following disclaimer.
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 #    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution. 
-# 
+#    and/or other materials provided with the distribution.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -181,7 +181,7 @@ class Problem(object):
         >>> problem.addVariables(["a", "b"], [1, 2, 3])
         >>> problem.addConstraint(lambda a, b: b == a+1, ["a", "b"])
         >>> solutions = problem.getSolutions()
-        >>> 
+        >>>
 
         @param constraint: Constraint to be included in the problem
         @type  constraint: instance a L{Constraint} subclass or a
@@ -286,7 +286,7 @@ class Problem(object):
             domain.resetState()
             if not domain:
                 return None, None, None
-        #doArc8(getArcs(domains, constraints), domains, {})
+        # doArc8(getArcs(domains, constraints), domains, {})
         return domains, constraints, vconstraints
 
 # ----------------------------------------------------------------------
@@ -762,7 +762,7 @@ class Domain(list):
     def pushState(self):
         """
         Save current domain state
-        
+
         Variables hidden after that call are restored when that state
         is popped from the stack.
         """
@@ -800,7 +800,7 @@ class Domain(list):
 class Constraint(object):
     """
     Abstract base class for constraints
-    """ 
+    """
 
     def __call__(self, variables, domains, assignments, forwardcheck=False):
         """
@@ -923,7 +923,7 @@ class FunctionConstraint(Constraint):
     >>> problem.getSolution()
     {'a': 1, 'b': 2}
     """#"""
- 
+
     def __init__(self, func, assigned=True):
         """
         @param func: Function wrapped and queried for constraint logic
@@ -1431,4 +1431,3 @@ class SomeNotInSetConstraint(Constraint):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-
